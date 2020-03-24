@@ -5,10 +5,16 @@ using UnityEngine;
 public class CarryItem : MonoBehaviour
 {
 
-    public GameObject cube01;
+    GameObject carryItem;
     public GameObject thePlayer;
+    public GameObject carryInHands;
 
-    public bool isCarrying = false;
+    private GameObject[] cubes;
+
+    public static bool isCarrying = false;
+
+    private double PICK_UP_DISTANCE = 1.0;
+    private double DROP_DISTANCE = 1.0;
 
     void Update()
     {
@@ -17,31 +23,75 @@ public class CarryItem : MonoBehaviour
         {
             if (isCarrying == false)
             {
-                if (getDistance(cube01, thePlayer) < 2.0) {
+                //Find closest item
+                if (cubes == null)
+                    cubes = GameObject.FindGameObjectsWithTag("CarryItem");
+                carryItem = getClosest(cubes, thePlayer);
+
+
+                //Check if in grab range
+                if (getDistance(carryItem, thePlayer) < PICK_UP_DISTANCE) {
                     Debug.Log("Picked Up");
                     isCarrying = true;
-                    //cube01.transform.position.Set(cube01.transform.position.x, 5f, cube01.transform.position.z);
-                    cube01.transform.position = new Vector3(cube01.transform.position.x, 2f, cube01.transform.position.z);
-
+                    carryItem.SetActive(false);
+                    carryInHands.SetActive(true);
+                    carryItem.transform.position = new Vector3(carryItem.transform.position.x, 2f, carryItem.transform.position.z);
                 }
             }
             else
             {
-                //cube01.transform.parent = null;
                 Debug.Log("Dropped");
-                cube01.transform.position = new Vector3(thePlayer.transform.position.x, 0.5f, thePlayer.transform.position.z);
-                //cube01.transform.position.Set(cube01.transform.position.x, 2f, cube01.transform.position.z);
+
+                //Get Player Y Angle
+                float playerAngle = thePlayer.transform.eulerAngles.y;
+
+
+                //Calculate new coordinates of item on drop
+                float dropX = (float) (thePlayer.transform.position.x + DROP_DISTANCE * Mathf.Sin((float)((playerAngle) / 180.0 * Mathf.PI)));
+                float dropZ = (float) (thePlayer.transform.position.z + DROP_DISTANCE * Mathf.Cos((float)((playerAngle) / 180.0 * Mathf.PI)));
+
+
+                //Set new coordinates of item
+                carryItem.transform.position = new Vector3(dropX, 0.25f, dropZ);
+                carryItem.transform.rotation = new Quaternion(0, 0, 0, 0);
+
+                //Rotate item to face player on drop
+                carryItem.transform.Rotate(new Vector3(0, 1, 0), playerAngle);
+
+                carryInHands.SetActive(false);
+                carryItem.SetActive(true);
                 isCarrying = false;
+                CharControl.changeToNormalAnimation = true;
             }
         }
 
         if (isCarrying)
         {
-
-            cube01.transform.position = new Vector3(thePlayer.transform.position.x, 2f, thePlayer.transform.position.z);
-
+            carryItem.transform.position = 
+                new Vector3(thePlayer.transform.position.x, 2f, thePlayer.transform.position.z);
         }
 
+    }
+
+    public GameObject getClosest(GameObject[] objects, GameObject ThePlayer)
+    {
+        if (objects == null) return null;
+
+        GameObject closest = objects[0];
+        double minDist = getDistance(closest, ThePlayer);
+
+        for (int i = 1; i < objects.Length; i++)
+        {
+            double temp = getDistance(objects[i], ThePlayer);
+            if (temp < minDist)
+            {
+                minDist = temp;
+                closest = objects[i];
+            }
+        }
+
+
+        return closest;
     }
 
     public double getDistance(GameObject A, GameObject B)
