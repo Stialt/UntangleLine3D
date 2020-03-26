@@ -16,6 +16,10 @@ public class CarryItem : MonoBehaviour
     private double PICK_UP_DISTANCE = 1.0;
     private double DROP_DISTANCE = 1.0;
 
+    private float itemPickUpYAngle;
+    private float playerPickUpYAngle;
+    private float heightDifferencePickup;
+
     void Update()
     {
 
@@ -35,7 +39,10 @@ public class CarryItem : MonoBehaviour
                     isCarrying = true;
                     carryItem.SetActive(false);
                     carryInHands.SetActive(true);
-                    carryItem.transform.position = new Vector3(carryItem.transform.position.x, 2f, carryItem.transform.position.z);
+                    //carryItem.transform.position = new Vector3(carryItem.transform.position.x, 2f, carryItem.transform.position.z);
+                    itemPickUpYAngle = carryItem.transform.eulerAngles.y;
+                    playerPickUpYAngle = thePlayer.transform.eulerAngles.y;
+                    heightDifferencePickup = carryItem.transform.localPosition.y - thePlayer.transform.position.y;
                 }
             }
             else
@@ -52,11 +59,16 @@ public class CarryItem : MonoBehaviour
 
 
                 //Set new coordinates of item
-                carryItem.transform.position = new Vector3(dropX, 0.25f, dropZ);
-                carryItem.transform.rotation = new Quaternion(0, 0, 0, 0);
+                carryItem.transform.position = new Vector3(dropX, thePlayer.transform.position.y + heightDifferencePickup, dropZ);
+                //carryItem.transform.rotation = new Quaternion(0, 0, 0, 0);
 
                 //Rotate item to face player on drop
-                carryItem.transform.Rotate(new Vector3(0, 1, 0), playerAngle);
+                //carryItem.transform.Rotate(new Vector3(0, 1, 0), playerPickUpYAngle - playerAngle - itemPickUpYAngle);
+
+                //carryItem.transform.rotation = new Quaternion(carryItem.transform.rotation.x, playerAngle,
+                //    carryItem.transform.rotation.z, carryItem.transform.rotation.w);
+
+                carryItem.transform.rotation = Quaternion.Euler(carryItem.transform.eulerAngles.x, playerAngle - playerPickUpYAngle + itemPickUpYAngle, carryItem.transform.eulerAngles.z);
 
                 carryInHands.SetActive(false);
                 carryItem.SetActive(true);
