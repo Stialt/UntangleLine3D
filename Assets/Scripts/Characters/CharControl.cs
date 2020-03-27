@@ -37,9 +37,14 @@ public class CharControl : MonoBehaviour
 
     void Update()
     {
+        
+
         if (Input.GetButton("Horizontal") ||
             Input.GetButton("Vertical"))
         {
+            //[0.5.0] Disable character control if UI is active
+            if (ButtonHandler.victoryActive || ButtonHandler.startActive)
+                return;
 
             if (CarryItem.isCarrying)
             {

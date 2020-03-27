@@ -7,18 +7,26 @@ using UntangleLines;
 
 public class GameAreaPuzzle : MonoBehaviour
 {
+    //Prefabs
 
-    public GameObject someGem;
+    //[0.5.0] Lines removed since now more than one gem is used
+    //public GameObject someGem;
+    //public float height = 10.04f;
+
+    public GameObject[] PrefabGems;
     public GameObject line;
+    private float[] gemHeights = { 10.21f, 10.04f, 10.04f, 10.3f, 10.2f };
+    private float averageHeight = 10.152f;
 
-    public int N = 15;
-    public float midX = 143, midY = 211;
-    public float size = 20;
+
+    public static int N = 5;
+    public static float midX = 143, midY = 211;
+    public static float size = 16;
+
 
     private List<GameObject> lines = new List<GameObject>();
     private List<GameObject> gems = new List<GameObject>();
 
-    public float height = 10.04f;
     private static Puzzle puzzle = new Puzzle();
 
     public GameObject victoryScreen;
@@ -26,15 +34,18 @@ public class GameAreaPuzzle : MonoBehaviour
     private static bool isVictory = false;
     private static bool isRestart = false;
 
+    System.Random random = new System.Random();
+
     public static void setRestart(bool val)
     {
         isRestart = val;
     }
 
-    void Start()
+    // [0.5.0] Removed since now game is started from UI
+    /*void Start()
     {
         createPuzzle();
-    }
+    }*/
 
     // Update is called once per frame
     void Update()
@@ -47,18 +58,20 @@ public class GameAreaPuzzle : MonoBehaviour
             {
                 if (puzzle.Edges[i, j] == 1)
                 {
+
                     //Update line
+                    //if (lines.Count <= count) break;
                     GameObject newLine = lines[count++];
                     LineRenderer lineRenderer = newLine.GetComponent<LineRenderer>();
                     Vector3[] positions = new Vector3[2];
 
-                    //TODO: [0.4.0] Adjust height for carried items
-                    float adjustedHeight = height + 0.2f;
-                    if (CarryItem.carryID == i) adjustedHeight = height + 1f;
+                    //TODO: [0.4.0] Adjust height of lines for carried items
+                    float adjustedHeight = averageHeight + 0.2f;
+                    if (CarryItem.carryID == i) adjustedHeight = averageHeight + 1f;
                     positions[0] = new Vector3(puzzle.randomPoints[i].X, adjustedHeight, puzzle.randomPoints[i].Y);
 
-                    if (CarryItem.carryID == j) adjustedHeight = height + 1f;
-                    else adjustedHeight = height + 0.2f;
+                    if (CarryItem.carryID == j) adjustedHeight = averageHeight + 1f;
+                    else adjustedHeight = averageHeight + 0.2f;
                     positions[1] = new Vector3(puzzle.randomPoints[j].X, adjustedHeight, puzzle.randomPoints[j].Y);
 
                     //TODO: [0.4.0] Set red for intersecting lines
@@ -77,7 +90,7 @@ public class GameAreaPuzzle : MonoBehaviour
         //Checking Victory flag
         if (isVictory)
         {
-            if (victoryScreen.active == true)
+            if (victoryScreen.activeSelf == true)
                 isVictory = false;
             else
                 StartCoroutine(showVictory());
@@ -106,6 +119,7 @@ public class GameAreaPuzzle : MonoBehaviour
     {
         isVictory = false;
         victoryScreen.SetActive(true);
+        ButtonHandler.victoryActive = true;
         yield return new WaitForSeconds(5f);
         //victoryScreen.SetActive(false);
     }
@@ -121,12 +135,15 @@ public class GameAreaPuzzle : MonoBehaviour
     public void createPuzzle()
     {
 
-        //TODO: destroy all previous created gems
+        //Destroy all previously created gems
         foreach (GameObject gameObject in gems)
-        {
             Destroy(gameObject);
-        }
         gems.Clear();
+
+        //Destroy all previously created lines
+        foreach (GameObject line in lines)
+            Destroy(line);
+        lines.Clear();
         
 
         puzzle.createPuzzle(N, (int) midX, (int) midY, (int) size);
@@ -134,8 +151,14 @@ public class GameAreaPuzzle : MonoBehaviour
         for (int i = 0; i < puzzle.N; i++)
         {
             myPoint p = puzzle.randomPoints[i];
+
+            //[0.5.0] Get Random Gem from prefabs
+            int index = random.Next(5);
+            float gemHeight = gemHeights[index];
+            GameObject someGem = PrefabGems[index];
+
             GameObject newGem = Instantiate(someGem);
-            newGem.transform.localPosition = new Vector3(p.X, height, p.Y);
+            newGem.transform.localPosition = new Vector3(p.X, gemHeight, p.Y);
             newGem.GetComponent<MultipleTags>().Rename(0, "" + p.ID);
             gems.Add(newGem);
         }
@@ -166,8 +189,8 @@ public class GameAreaPuzzle : MonoBehaviour
                     GameObject newLine = Instantiate(line);
                     LineRenderer lineRenderer = newLine.GetComponent<LineRenderer>();
                     Vector3[] positions = new Vector3[2];
-                    positions[0] = new Vector3(puzzle.randomPoints[i].X, height + 0.2f, puzzle.randomPoints[i].Y);
-                    positions[1] = new Vector3(puzzle.randomPoints[j].X, height + 0.2f, puzzle.randomPoints[j].Y);
+                    positions[0] = new Vector3(puzzle.randomPoints[i].X, averageHeight + 0.2f, puzzle.randomPoints[i].Y);
+                    positions[1] = new Vector3(puzzle.randomPoints[j].X, averageHeight + 0.2f, puzzle.randomPoints[j].Y);
                     lineRenderer.SetPositions(positions);
 
                     //TODO: [0.4.0] Set red for intersecting lines
