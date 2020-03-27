@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UntangleLines;
 
 public class CarryItem : MonoBehaviour
 {
@@ -14,11 +16,13 @@ public class CarryItem : MonoBehaviour
     public static bool isCarrying = false;
 
     private double PICK_UP_DISTANCE = 1.0;
-    private double DROP_DISTANCE = 1.0;
+    private double DROP_DISTANCE = 0.9;
 
     private float itemPickUpYAngle;
     private float playerPickUpYAngle;
     private float heightDifferencePickup;
+
+    public static int carryID = -1;
 
     void Update()
     {
@@ -35,11 +39,29 @@ public class CarryItem : MonoBehaviour
 
                 //Check if in grab range
                 if (getDistance(carryItem, thePlayer) < PICK_UP_DISTANCE) {
-                    Debug.Log("Picked Up");
+                    //--------PICKED UP---------
+
                     isCarrying = true;
-                    carryItem.SetActive(false);
-                    carryInHands.SetActive(true);
-                    //carryItem.transform.position = new Vector3(carryItem.transform.position.x, 2f, carryItem.transform.position.z);
+
+                    //TODO: [0.4.0] Remove this lines
+                    //carryItem.SetActive(false);
+                    //carryInHands.SetActive(true);
+
+                    //Get carried carryID if exists
+                    if (carryItem.GetComponent<MultipleTags>() != null)
+                    {
+                        string tag = carryItem.GetComponent<MultipleTags>().GetAtIndex(0);
+                        carryID = Int32.Parse(tag);
+                    }
+
+
+                    if (carryItem.GetComponent<MeshCollider>() != null)
+                        carryItem.GetComponent<MeshCollider>().enabled = false;
+                    if (carryItem.GetComponent<BoxCollider>() != null)
+                        carryItem.GetComponent<BoxCollider>().enabled = false;
+                    if (carryItem.GetComponentInChildren<BoxCollider>() != null)
+                        carryItem.GetComponentInChildren<BoxCollider>().enabled = false;
+
                     itemPickUpYAngle = carryItem.transform.eulerAngles.y;
                     playerPickUpYAngle = thePlayer.transform.eulerAngles.y;
                     heightDifferencePickup = carryItem.transform.localPosition.y - thePlayer.transform.position.y;
@@ -47,7 +69,8 @@ public class CarryItem : MonoBehaviour
             }
             else
             {
-                Debug.Log("Dropped");
+                //-------DROPPED--------
+                carryID = -1;
 
                 //Get Player Y Angle
                 float playerAngle = thePlayer.transform.eulerAngles.y;
@@ -60,27 +83,51 @@ public class CarryItem : MonoBehaviour
 
                 //Set new coordinates of item
                 carryItem.transform.position = new Vector3(dropX, thePlayer.transform.position.y + heightDifferencePickup, dropZ);
-                //carryItem.transform.rotation = new Quaternion(0, 0, 0, 0);
-
-                //Rotate item to face player on drop
-                //carryItem.transform.Rotate(new Vector3(0, 1, 0), playerPickUpYAngle - playerAngle - itemPickUpYAngle);
-
-                //carryItem.transform.rotation = new Quaternion(carryItem.transform.rotation.x, playerAngle,
-                //    carryItem.transform.rotation.z, carryItem.transform.rotation.w);
-
                 carryItem.transform.rotation = Quaternion.Euler(carryItem.transform.eulerAngles.x, playerAngle - playerPickUpYAngle + itemPickUpYAngle, carryItem.transform.eulerAngles.z);
 
-                carryInHands.SetActive(false);
-                carryItem.SetActive(true);
+                //Set new coordinates for point in puzzle
+                if (carryItem.GetComponent<MultipleTags>() != null)
+                {
+                    string tag = carryItem.GetComponent<MultipleTags>().GetAtIndex(0);
+                    GameAreaPuzzle.updatePoint(tag, dropX, dropZ);
+                }
+
+                //TODO: [0.4.0] Remove this lines
+                //carryInHands.SetActive(false);
+                //carryItem.SetActive(true);
+
+                if (carryItem.GetComponent<MeshCollider>() != null)
+                    carryItem.GetComponent<MeshCollider>().enabled = true;
+                if (carryItem.GetComponent<BoxCollider>() != null)
+                    carryItem.GetComponent <BoxCollider>().enabled = true;
+                if (carryItem.GetComponentInChildren<BoxCollider>() != null)
+                    carryItem.GetComponentInChildren<BoxCollider>().enabled = true;
+
                 isCarrying = false;
                 CharControl.changeToNormalAnimation = true;
+
+                //[0.4.0] Victory Condition Check
+                GameAreaPuzzle.checkVictory();
             }
         }
 
         if (isCarrying)
         {
+            //TODO: [0.4.0] update to be in player's hand
+            float playerAngle = thePlayer.transform.eulerAngles.y;
+            float dropX = (float)(thePlayer.transform.position.x + 0.3f * Mathf.Sin((float)((playerAngle) / 180.0 * Mathf.PI)));
+            float dropZ = (float)(thePlayer.transform.position.z + 0.3f * Mathf.Cos((float)((playerAngle) / 180.0 * Mathf.PI)));
+
             carryItem.transform.position = 
-                new Vector3(thePlayer.transform.position.x, 2f, thePlayer.transform.position.z);
+                new Vector3(dropX, heightDifferencePickup + thePlayer.transform.position.y + 0.8f, dropZ);
+            carryItem.transform.rotation = Quaternion.Euler(carryItem.transform.eulerAngles.x, playerAngle - playerPickUpYAngle + itemPickUpYAngle, carryItem.transform.eulerAngles.z);
+
+            //Updating point coordinates for puzzle as well
+            if (carryItem.GetComponent<MultipleTags>() != null)
+            {
+                string tag = carryItem.GetComponent<MultipleTags>().GetAtIndex(0);
+                GameAreaPuzzle.updatePoint(tag, dropX, dropZ);
+            }
         }
 
     }

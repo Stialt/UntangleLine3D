@@ -16,6 +16,7 @@ public class CameraControl : MonoBehaviour
     void Update()
     {
         //ABOVE Camera
+        //Temporarily Commented
         if (Input.GetMouseButtonDown(0) && (camState == NORMAL || camState == ABOVE))
         {
             if (camState == NORMAL)
