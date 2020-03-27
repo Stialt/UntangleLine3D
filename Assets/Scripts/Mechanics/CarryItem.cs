@@ -17,6 +17,7 @@ public class CarryItem : MonoBehaviour
 
     private double PICK_UP_DISTANCE = 1.0;
     private double DROP_DISTANCE = 0.9;
+    private float PICK_UP_ANGLE = 45.0f;    //Maximum angle between player direction and object
 
     private float itemPickUpYAngle;
     private float playerPickUpYAngle;
@@ -32,20 +33,20 @@ public class CarryItem : MonoBehaviour
             if (isCarrying == false)
             {
                 //Find closest item
-                if (cubes == null)
-                    cubes = GameObject.FindGameObjectsWithTag("CarryItem");
+                cubes = GameObject.FindGameObjectsWithTag("CarryItem");
                 carryItem = getClosest(cubes, thePlayer);
 
+                //[0.5.0] Check if the item is in front of the player
+                Vector3 directionToTarget = thePlayer.transform.position - carryItem.transform.position;
+                float angle = Vector3.Angle(-thePlayer.transform.forward, directionToTarget);
+                //if (Mathf.Abs(angle) < 90)
+                //    Debug.Log("target is in front of me");
 
                 //Check if in grab range
-                if (getDistance(carryItem, thePlayer) < PICK_UP_DISTANCE) {
+                if (getDistance(carryItem, thePlayer) < PICK_UP_DISTANCE && Mathf.Abs(angle) < PICK_UP_ANGLE) {
                     //--------PICKED UP---------
 
                     isCarrying = true;
-
-                    //TODO: [0.4.0] Remove this lines
-                    //carryItem.SetActive(false);
-                    //carryInHands.SetActive(true);
 
                     //Get carried carryID if exists
                     if (carryItem.GetComponent<MultipleTags>() != null)
@@ -91,11 +92,7 @@ public class CarryItem : MonoBehaviour
                     string tag = carryItem.GetComponent<MultipleTags>().GetAtIndex(0);
                     GameAreaPuzzle.updatePoint(tag, dropX, dropZ);
                 }
-
-                //TODO: [0.4.0] Remove this lines
-                //carryInHands.SetActive(false);
-                //carryItem.SetActive(true);
-
+                
                 if (carryItem.GetComponent<MeshCollider>() != null)
                     carryItem.GetComponent<MeshCollider>().enabled = true;
                 if (carryItem.GetComponent<BoxCollider>() != null)
@@ -106,14 +103,13 @@ public class CarryItem : MonoBehaviour
                 isCarrying = false;
                 CharControl.changeToNormalAnimation = true;
 
-                //[0.4.0] Victory Condition Check
+                //Victory Condition Check
                 GameAreaPuzzle.checkVictory();
             }
         }
 
         if (isCarrying)
         {
-            //TODO: [0.4.0] update to be in player's hand
             float playerAngle = thePlayer.transform.eulerAngles.y;
             float dropX = (float)(thePlayer.transform.position.x + 0.3f * Mathf.Sin((float)((playerAngle) / 180.0 * Mathf.PI)));
             float dropZ = (float)(thePlayer.transform.position.z + 0.3f * Mathf.Cos((float)((playerAngle) / 180.0 * Mathf.PI)));
@@ -132,6 +128,9 @@ public class CarryItem : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// Finds closest object from the given array to the given one
+    /// </summary>
     public GameObject getClosest(GameObject[] objects, GameObject ThePlayer)
     {
         if (objects == null) return null;
@@ -153,6 +152,9 @@ public class CarryItem : MonoBehaviour
         return closest;
     }
 
+    /// <summary>
+    /// Function to calculate geometric distance between two GameObject objects
+    /// </summary>
     public double getDistance(GameObject A, GameObject B)
     {
         double sum = Mathf.Pow(A.transform.position.x - B.transform.position.x, 2);
