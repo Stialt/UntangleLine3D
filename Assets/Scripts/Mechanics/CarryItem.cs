@@ -15,7 +15,7 @@ public class CarryItem : MonoBehaviour
 
     public static bool isCarrying = false;
 
-    private double PICK_UP_DISTANCE = 1.0;
+    private double PICK_UP_DISTANCE = 1.2;
     private double DROP_DISTANCE = 0.9;
     private float PICK_UP_ANGLE = 45.0f;    //Maximum angle between player direction and object
 
@@ -28,8 +28,12 @@ public class CarryItem : MonoBehaviour
     void Update()
     {
 
-        if (Input.GetButtonDown("Jump"))
+        if (Input.GetButtonDown("Interact"))
         {
+
+            if (ButtonHandler.startActive || ButtonHandler.victoryActive)
+                return;
+
             if (isCarrying == false)
             {
                 //Find closest item
@@ -101,7 +105,8 @@ public class CarryItem : MonoBehaviour
                     carryItem.GetComponentInChildren<BoxCollider>().enabled = true;
 
                 isCarrying = false;
-                CharControl.changeToNormalAnimation = true;
+                //CharControl.changeToNormalAnimation = true;
+                AnimationControl.PLAYER_STATE = AnimationControl.IDLE;
 
                 //Victory Condition Check
                 GameAreaPuzzle.checkVictory();
