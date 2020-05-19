@@ -8,3 +8,6 @@
 * *Picking up objects*
 * *Jumping*
 * *Various animations*
+
+## Authors
+* **Denis Kim** - *Initial Work, Implementation* - [Stialt](https://github.com/Stialt)
